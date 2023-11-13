@@ -1,0 +1,38 @@
+name: ltex
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - name: Checking out repository
+      uses: actions/checkout@v4
+    - name: Install ltex-ls
+      run: |
+        brew install ltex-ls
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    - name: Run ltex-ls
+      id: run-ltex-ls
+      run: |
+        unset JAVA_HOME
+        ltex-cli --client-configuration=paper/ltex.json paper | tee ltex-cli.log
+    - name: Build comment
+      id: build-comment
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ github.token }}
+        result-encoding: string
+        script: |
+          const fs = require('fs');
+          return "<details>\n<summary>ltex output</summary>\n\n```\n" + fs.readFileSync("${{ github.workspace }}/ltex-cli.log", "utf8").toString() + "\n```\n</details>";
+    - name: Comment in PR
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        message: ${{ steps.build-comment.outputs.result }}
