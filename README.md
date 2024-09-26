@@ -16,6 +16,10 @@ In order for GitHub Actions to work properly, set the following permissions in y
 * Check *Workflow permissions > Read and write permissions*.
 * Check *Allow GitHub Actions to create and approve pull requests*.
 
+In addition, under General:
+
+* Check *Automatically delete head branches*.
+
 ## Updating Workflows
 
 If you can think of useful improvements to the GitHub Actions workflows, please open a pull request against https://github.com/dpo/report.git.
