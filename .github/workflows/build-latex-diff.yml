@@ -3,8 +3,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 jobs:
-  build_latex:
+  build_latex_diff:
     runs-on: ubuntu-latest
     env:
       PAPER: ${{ github.event.repository.name }}
@@ -18,12 +22,13 @@ jobs:
         id: compileLaTeXdiff
         uses: xu-cheng/latex-action@v3
         with:
+          texlive_version: 2023
           root_file: |
             ${{ env.PAPER }}-diff${{ env.MAIN }}.tex
           working_directory: paper
           extra_system_packages: "git patch"
           latexmk_shell_escape: true
-          pre_compile: git config --global --add safe.directory /github/workspace && latexdiff-vc --git --flatten --disable-auto-mbox --exclude-safecmd="Cref,Cref\*,hspace" -r ${{ env.MAIN }} ${{ env.PAPER }}.tex
+          pre_compile: git config --global --add safe.directory /github/workspace && latexdiff-vc --git --flatten --disable-auto-mbox --exclude-safecmd="Cref,Cref\*,hspace" --allow-spaces --no-links -r ${{ env.MAIN }} ${{ env.PAPER }}.tex
         env:
           TEXINPUTS: ".:$PWD/../latex-styles-master/styles//:"
           BSTINPUTS: ".:$PWD/../latex-styles-master/styles/common"
@@ -31,14 +36,14 @@ jobs:
         continue-on-error: true
       - name: Upload PDF
         if: steps.compileLaTeXdiff.outcome == 'success'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Success--Here-is-the-Diff-PDF
           path: |
             paper/${{ env.PAPER }}-diff${{ env.MAIN }}.pdf
       - name: Upload build logs
         if: steps.compileLaTeXdiff.outcome == 'failure'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Diff-Build-Failed--Here-are-the-Logs
           path: |

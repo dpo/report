@@ -6,6 +6,10 @@ on:
       - master
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,7 +28,7 @@ jobs:
         result-encoding: string
         script: |
           const fs = require('fs');
-          return "<details>\n<summary>Chktex output</summary>\n\n```\n" + fs.readFileSync("${{ github.workspace }}/chktex_output.txt", "utf8").toString() + "\n```\n</details>";
+          return "Chktex output: \n```\n" + fs.readFileSync("${{ github.workspace }}/chktex_output.txt", "utf8").toString() + "```";
     - name: Comment in PR
       uses: thollander/actions-comment-pull-request@v2
       with:
